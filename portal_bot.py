@@ -17,8 +17,10 @@ facebook_pass = ''
 facebook_id2 = 'hexa.food@gmail.com'
 facebook_pass2 = ''
 
-encrypted_password = ''
-login_url = 'https://portal.unist.ac.kr/EP/web/login/login_chk.jsp?loginid=carpedm20&password=' + encrypted_password + '&cookie=off&LangSet=ko&loginmethod=Id&lang=K&roundkey=&browsertype=MSIE'
+portal_id = 'carpedm20'
+encrypted_password = '' # this is not your plain password. when you login to portal, they send encrypted password to server. you can check this with programs like 'paros' or 'wireshark'
+
+login_url = 'https://portal.unist.ac.kr/EP/web/login/login_chk.jsp?loginid=' + portal_id + '&password=' + encrypted_password + '&cookie=off&LangSet=ko&loginmethod=Id&lang=K&roundkey=&browsertype=MSIE'
 token_request_url = 'https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=256972304447471'
 token_request_url2 = 'https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=530042293708395'
 
