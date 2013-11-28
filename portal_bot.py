@@ -6,301 +6,406 @@ import base64
 import os
 import time
 import math
-import Image
+from PIL import Image
+import smtplib
 import atexit
 import subprocess
 from xvfbwrapper import Xvfb
+from email.MIMEImage import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.MIMEText import MIMEText
+from config import *
 import socket
-#test
 
-facebook_id = 'hexa.portal@gmail.com'
-facebook_pass = ''
-facebook_id2 = 'hexa.food@gmail.com'
-facebook_pass2 = ''
+def send_mail(text, filename=''):
+        fromaddr = 'hexa.portal@gmail.com'
+        recipients = ['carpedm20@gmail.com', 'doveu1234@naver.com']
+        toaddrs  = ", ".join(recipients)
 
-portal_id = 'carpedm20'
-encrypted_password = '' # this is not your plain password. when you login to portal, they send encrypted password to server. you can check this with programs like 'paros' or 'wireshark'
+        username = 'hexa.portal'
+        password = 'hexaisthebest'
 
-login_url = 'https://portal.unist.ac.kr/EP/web/login/login_chk.jsp?loginid=' + portal_id + '&password=' + encrypted_password + '&cookie=off&LangSet=ko&loginmethod=Id&lang=K&roundkey=&browsertype=MSIE'
-token_request_url = 'https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=256972304447471'
-token_request_url2 = 'https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=530042293708395'
+        msg = MIMEMultipart()
+        msg['From'] = fromaddr
+        msg['To'] = toaddrs
+        msg['Subject'] = text
+
+        part = MIMEText('text', "plain")
+        part.set_payload(text)
+        msg.attach(part)
+
+        if filename is not '':
+                img = MIMEImage(open(filename,"rb").read(), _subtype="png")
+                img.add_header('Content-Disposition', 'attachment; filename="'+filename+'"')
+                msg.attach(img)
+
+        server = smtplib.SMTP('smtp.gmail.com:587')
+        server.starttls()
+        server.login(username,password)
+        server.sendmail(fromaddr, recipients, msg.as_string())
+        server.quit()
+        print " - mail sended"
 
 def exit_handler():
-	print "DEAD"
-	vdisplay.stop()
-	#send_mail("Bot is DEAD")
+        print "DEAD"
+        vdisplay.stop()
+        #send_mail("Bot is DEAD")
+
+def long_slice(image_path, out_name, outdir, number):
+        img = Image.open(image_path)
+        width, height = img.size
+
+        slice_size = height/number
+        upper = 0
+        left = 0
+        slices = int(math.ceil(height/slice_size))
+
+        count = 1
+        for slice in range(slices):
+                if count == slices:
+                        lower = height
+                else:
+                        lower = int(count * slice_size)
+                bbox = (left, upper-30, width, lower+30)
+                working_slice = img.crop(bbox)
+                upper += slice_size
+                working_slice.save(os.path.join(outdir, out_name + "_" + str(count)+".png"))
+                count +=1
+
+def width_slice(image_path, out_name, outdir, number):
+        img = Image.open(image_path)
+        width, height = img.size
+
+        slice_size = width/number
+        upper = 0
+        left = 0
+        slices = int(math.ceil(width/slice_size))
+
+        count = 1
+        for slice in range(slices):
+                if count == slices:
+                        right = width
+                else:
+                        right = int(count * slice_size)
+                bbox = (left-50, 0, right+50, height)
+                working_slice = img.crop(bbox)
+                left += slice_size
+                working_slice.save(os.path.join(outdir, out_name + "_" + str(count)+".png"))
+                count +=1
 
 atexit.register(exit_handler)
-
+#send_mail("Bot is Alive")
 vdisplay = Xvfb()
 vdisplay.start()
 
+import cookielib
+cj = cookielib.CookieJar()
+from cookielib import Cookie
+c=Cookie(version=0, name='JSESSIONID', value=jsession, port=None, port_specified=False, domain='portal.unist.ac.kr', domain_specified=False, domain_initial_dot=False, path='/EP', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
+cj.set_cookie(c)
+
+
 while 1:
-	br_mech = mechanize.Browser()
-	br_mech.set_handle_robots(False)
-	br_mech.open(login_url)
-	
-	for boardid in ['B200902281833482321051', 'B200902281833016691048']:
-		r = br_mech.open('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1')
-		html=r.read()
+        print '.'
+        br_mech = mechanize.Browser()
+        br_mech.set_handle_robots(False)
+        #br_spy = spynner.Browser()
+        #br_spy.load('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid=B200902281833482321051&nfirst='+str(i))
+
+        br_mech.open(login_url)
+        br_mech.set_cookie('JSESSIONID=' + jsession)
+        br_mech.set_cookiejar(cj)
+
+        new_board_list = ['B201309091034272615665','B200912141432112623720','B201309090952407345581']
+        old_board_list = ['B200902281833482321051','B200902281833016691048']
+
+        for boardid in ['B201309091034272615665', # new announcement
+                  'B200912141432112623720', # internship
+                  'B201309090952407345581', # student support announcement
+                  ###########################
+                  'B200902281833482321051', # old announcement
+                  'B200902281833016691048']:
+                r = br_mech.open('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1')
+                html=r.read()
+                print ' [*] START : http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1'
+
+                id_list=[]
+
+                for str1 in html.split('clickBulletin('):
+                        if boardid in new_board_list:
+                          a = str1.split("\', \'")[0]
+                          if a.find(';') != -1:
+                            continue
+                          a = a.replace("'",'').replace('"','')
+                          id_list.append(a)
+                        else:
+                          a = str1.split('","')[0]
+                          if a.find(';') != -1:
+                            continue
+                          a = a.replace("'",'').replace('"','')
+                          id_list.append(a)
+
+                id_list.remove(id_list[0])
+
+                for id_item in id_list:
+                        files = [f for f in os.listdir('.') if os.path.isfile(f)]
+
+                        new = False
+
+                        for f in files:
+                                if f.find(id_item) is not -1:
+                                        new = True
+
+                        if new is False:
+                                link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=256972304447471'
+
+                                br_mech = mechanize.Browser()
+                                br_mech.set_handle_robots(False)
+
+                                #print '[1] open link'
+                                br_mech.open(link)
+
+                                #print '[2] current url : ' + br_mech.geturl()
+
+                                br_mech.form = list(br_mech.forms())[0]
+                                control = br_mech.form.find_control("email")
+                                control.value='hexa.portal@gmail.com'
+                                control = br_mech.form.find_control("pass")
+                                control.value='poet2092'
+
+                                #print '[3] submit'
+                                br_mech.submit()
+
+                                #print '[4] current url : ' + br_mech.geturl()
+
+                                app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
+                                print '[5] access token : ' + app_access
+
+                                br_spy = spynner.Browser()
+                                #br_spy.load(login_url)
+                                br_spy.set_cookies('portal.unist.ac.kr\tFALSE\t/EP\tFALSE\t4294967295\tJSESSIONID\t'+jsession)
+                                br_spy.load('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1')
+                                br_spy.load("http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid="+boardid+"&bullid="+id_item)
+
+                                print '[6] save : '
+                                br_spy.snapshot().save(id_item + '.png')
+
+                                print (id_item + '.png')
+                                img=Image.open(id_item + '.png')
+                                width, height = img.size
+                                print 'height : ' + str(height)
 
-		id_list=[]
+                                slice_num=1
+                                sliced=False
+
+                                if height > 1200:
+                                        slice_num=2
+                                        sliced=True
+                                if height > 2000:
+                                        slice_num=3
+                                        sliced=True
+                                if height > 2800:
+                                        slice_num=4
+                                        sliced=True
+                                if height > 3600:
+                                        slice_num=5
+                                        sliced=True
 
-		for str1 in html.split('javascript:clickBulletin("'):
-			id_list.append(str1.split('","')[0])
+                                print 'sliced num : ' + str(slice_num)
 
-		id_list.remove(id_list[0])
+                                if sliced is True:
+                                        long_slice(id_item + '.png',id_item,os.getcwd(),slice_num)
 
-		for id_item in id_list:
-			files = [f for f in os.listdir('.') if os.path.isfile(f)]
+                                graph = facebook.GraphAPI(app_access)
 
-			new = False
+                                title = br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
 
-			for f in files:
-				if f.find(id_item) is not -1:
-					new = True
+                                print '[7] upload : ' + id_item
+                                if title.find('주간메뉴표') is not -1:
+                                        link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=530042293708395'
 
-			if new is False:
-				link = token_request_url
+                                        #print '[1] open link'
+                                        food_br = mechanize.Browser()
+                                        food_br.set_handle_robots(False)
+                                        food_br.open(link)
 
-				#print '[1] open link'
-				br_mech.open(link)
+                                        #print '[2] current url : ' + br_mech.geturl()
 
-				#print '[2] current url : ' + br_mech.geturl()
+                                        food_br.form = list(food_br.forms())[0]
+                                        control = food_br.form.find_control("email")
+                                        control.value='hexa.food@gmail.com'
+                                        control = food_br.form.find_control("pass")
+                                        control.value='poet2092'
 
-				br_mech.form = list(br_mech.forms())[0]
-				control = br_mech.form.find_control("email")
-				control.value = facebook_id
-				control = br_mech.form.find_control("pass")
-				control.value = facebook_pass
+                                        #print '[3] submit'
+                                        food_br.submit()
 
-				#print '[3] submit'
-				br_mech.submit()
+                                        #print '[4] current url : ' + br_mech.geturl()
 
-				#print '[4] current url : ' + br_mech.geturl()
+                                        app_access = food_br.geturl().split('token=')[1].split('&expires')[0]
+                                        print '[5] access token : ' + app_access
 
-				app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
-				print '[5] access token : ' + app_access
+                                        br_mech.open(login_url)
+                                        r = br_mech.open("http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid="+boardid+"&bullid="+id_item)
+                                        r = r.read()
+                                        r = r[r.find('fid=')+4:]
+                                        fid = r[:r.find('&jndiname=')]
 
-				br_spy = spynner.Browser()
-				br_spy.load(login_url)
-				br_spy.load('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1')
-				br_spy.load("http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid="+boardid+"&bullid="+id_item)
+                                        r = br_mech.open("http://portal.unist.ac.kr/EP/web/common/attach/att_list.jsp?fid="+fid+"&jndiname=BB_Attach")
 
-				print '[6] save : '
-				br_spy.snapshot().save(id_item + '.png')
+                                        br_mech.select_form(name="frmList")
 
-				img=Image.open(id_item + '.png')
-				width, height = img.size
-				print 'height : ' + str(height)
+                                        try:
+                                           file0 = br_mech.form['sInfo0']
+                                        except:
+                                           file0 = ''
 
-				slice_num=1
-				sliced=False
+                                        try:
+                                           file1 = br_mech.form['sInfo1']
+                                        except:
+                                           file1 = ''
 
-				if height > 1200:
-					slice_num=2
-					sliced=True
-				if height > 2000:
-					slice_num=3
-					sliced=True
-				if height > 2800:
-					slice_num=4
-					sliced=True
-				if height > 3600:
-					slice_num=5
-					sliced=True
+                                        br_mech.select_form(name="frmSubmit")
+                                        br_mech.form.find_control("fileinfos").readonly = False
 
-				print 'sliced num : ' + str(slice_num)
+                                        if file1 is '':
+                                                br_mech.form['fileinfos'] = file0 + "\x1F"
+                                        else:
+                                                br_mech.form['fileinfos'] = file0 + "\x1F" + file1 + "\x1F"
 
-				if sliced is True:
-					long_slice(id_item + '.png',id_item,os.getcwd(),slice_num)
+                                        br_mech.form.find_control("viewdown").readonly = False
+                                        br_mech.form['viewdown']='view'
 
-				graph = facebook.GraphAPI(app_access)
+                                        r = br_mech.submit()
+                                        data= str(r.read())
+                                        #print data
 
-				title = br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
+                                        data = data[data.find("/wwasdata/acube/ep/acube_sftptemp/")+1:]
 
-				print '[7] upload : ' + id_item
-				if title.find('주간메뉴표') is not -1:
-					link = token_request_url2
+                                        start0 = data.find("/wwasdata/acube/ep/acube_sftptemp/")
+                                        end0 = data.find("\x1d",start0)
+                                        start1 = data.find("/wwasdata/acube/ep/acube_sftptemp/",end0)
+                                        end1= data.find("\x1d",start1)
 
-					#print '[1] open link'
-					food_br = mechanize.Browser()
-					food_br.set_handle_robots(False)
-					food_br.open(link)
+                                        sh0 = data[start0:end0]
+                                        sh1 = data[start1:end1]
 
-					#print '[2] current url : ' + br_mech.geturl()
+                                        print "[*] 0 : " + sh0
+                                        print "[*] 1 : " + sh1
 
-					food_br.form = list(food_br.forms())[0]
-					control = food_br.form.find_control("email")
-					control.value = facebook_id2
-					control = food_br.form.find_control("pass")
-					control.value = facebook_pass2
+                                        f_count = 0
+                                        h = br_spy.html
+                                        for sh in [sh0, sh1]:
+                                                if h.find('sAttachReal" value=') is not -1:
+                                                        h = h[h.find('sAttachReal" value=')+len('sAttachReal" value=')+1:]
+                                                title = h[:h.find('.xls')].encode('utf-8')
+                                                h = h[h.find('.xls')+5:]
 
-					#print '[3] submit'
-					food_br.submit()
+                                                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                                                s.connect(('sftp.unist.ac.kr', 7775))
+                                                s.settimeout(0.5)
 
-					#print '[4] current url : ' + br_mech.geturl()
+                                                send_data = "DOWNLOAD\x091\x091\x09"+sh
 
-					app_access = food_br.geturl().split('token=')[1].split('&expires')[0]
-					print '[5] access token : ' + app_access
+                                                send_len = str(len(send_data))
+                                                i = len(send_len)
 
-					r = br_mech.open("http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid="+boardid+"&bullid="+id_item)
-					r = r.read()
-					r = r[r.find('fid=')+4:]
-					fid = r[:r.find('&jndiname=')]
+                                                while i< 10:
+                                                        send_len = "0"+send_len
+                                                        i=i+1
 
-					r = br_mech.open("http://portal.unist.ac.kr/EP/web/common/attach/att_list.jsp?fid="+fid+"&jndiname=BB_Attach")
+                                                print "[#] Send : " + send_len
+                                                s.send(send_len)
+                                                s.send(send_data)
 
-					br_mech.select_form(name="frmList")
+                                                get = s.recv(1024)
+                                                print "[1] " + get
+                                                get = s.recv(1024)
+                                                print "[2] " + get
 
-					try:
-					   file0 = br_mech.form['sInfo0']
-					except:
-					   file0 = ''
+                                                data = get[13:]
+                                                while True:
+                                                        try:
+                                                                dd = s.recv(1024)
 
-					try:
-					   file1 = br_mech.form['sInfo1']
-					except:
-					   file1 = ''
+                                                                if len(dd) is 0:
+                                                                        print "[$] File END"
+                                                                        break
 
-					br_mech.select_form(name="frmSubmit")
-					br_mech.form.find_control("fileinfos").readonly = False
+                                                                data += dd
+                                                                print ".",
+                                                        except:
+                                                                s.send('\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30')
+                                                                print "[#] Again"
+                                                s.close()
 
-					if file1 is '':
-						br_mech.form['fileinfos'] = file0 + "\x1F"
-					else:
-						br_mech.form['fileinfos'] = file0 + "\x1F" + file1 + "\x1F"
+                                                f_name = sh[sh.find('temp/')+5:]
 
-					br_mech.form.find_control("viewdown").readonly = False
-					br_mech.form['viewdown']='view'
+                                                f = open(f_name,'wb')
+                                                f.write(data)
+                                                f.close()
 
-					r = br_mech.submit()
-					data= str(r.read())
-					#print data
+                                                print "[*] " + sh + " END"
 
-					data = data[data.find("/wwasdata/acube/ep/acube_sftptemp/")+1:]
+                                                subprocess.call('cp '+f_name+' ~/public_html/',shell=True)
+                                                br_spy.load('http://hexa.perl.sh/~carpedm30/excel.php?name='+f_name)
+                                                f_name = 'food_'+base64.b64encode(title)+'.png'
+                                                br_spy.snapshot().save(f_name)
+                                                img=Image.open(f_name)
+                                                width, height = img.size
+                                                print 'width : ' + str(width)
 
-					start0 = data.find("/wwasdata/acube/ep/acube_sftptemp/")
-					end0 = data.find("\x1d",start0)
-					start1 = data.find("/wwasdata/acube/ep/acube_sftptemp/",end0)
-					end1= data.find("\x1d",start1)
+                                                slice_num=3
+                                                sliced=True
 
-					sh0 = data[start0:end0]
-					sh1 = data[start1:end1]
+                                                print 'sliced num : ' + str(slice_num)
 
-					print "[*] 0 : " + sh0
-					print "[*] 1 : " + sh1
+                                                if sliced is True:
+                                                        width_slice(f_name,f_name,os.getcwd(),slice_num)
 
-					f_count = 0
-					h = br_spy.html
-					for sh in [sh0, sh1]:
-						if h.find('sAttachReal" value=') is not -1:
-							h = h[h.find('sAttachReal" value=')+len('sAttachReal" value=')+1:]
-						title = h[:h.find('.xls')].encode('utf-8')
-						h = h[h.find('.xls')+5:]
+                                                graph = facebook.GraphAPI(app_access)
 
-						s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-						s.connect(('sftp.unist.ac.kr', 7775))
-						s.settimeout(0.5)
+                                                if sliced is True:
+                                                        for nums in range(1, slice_num+1):
+                                                                nums=slice_num-nums+1
+                                                                print '[7] upload : ' + f_name + '_' + str(nums)
 
-						send_data = "DOWNLOAD\x091\x091\x09"+sh
+                                                                #graph.put_photo( open(f_name + '_' + str(nums) + '.png'), '부활 성공? :)\r\n\r\n' + title + ' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\nDesigned by carpedm20', "")
 
-						send_len = str(len(send_data))
-						i = len(send_len)
+                                                #graph.put_photo( open(f_name + '.png'), title+'\r\n\r\nDesigned by carpedm20', "")
+                                                print "put_photo finished"
+                                        link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=256972304447471'
 
-						while i< 10:
-							send_len = "0"+send_len
-							i=i+1
+                                        br_mech = mechanize.Browser()
+                                        br_mech.set_handle_robots(False)
+                                        #print '[1] open link'
+                                        br_mech.open(link)
 
-						print "[#] Send : " + send_len
-						s.send(send_len)
-						s.send(send_data)
+                                        #print '[2] current url : ' + br_mech.geturl()
+                                        br_mech.form = list(br_mech.forms())[0]
+                                        control = br_mech.form.find_control("email")
+                                        control.value='hexa.portal@gmail.com'
+                                        control = br_mech.form.find_control("pass")
+                                        control.value='poet2092'
 
-						get = s.recv(1024)
-						print "[1] " + get
-						get = s.recv(1024)
-						print "[2] " + get
+                                        #print '[3] submit'
+                                        br_mech.submit()
 
-						data = ''
-						while True:
-							try:
-								dd = s.recv(1024)
+                                        #print '[4] current url : ' + br_mech.geturl()
 
-								if len(dd) is 0:
-									print "[$] File END"
-									break
+                                        app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
+                                        print '[5] access token : ' + app_access
+                                else:
+                                        if sliced is True:
+                                                for nums in range(1, slice_num+1):
+                                                        nums=slice_num-nums+1
+                                                        print '[7] upload : ' + id_item + '_' + str(nums)
+                                                        print '    TITLE : ' + br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
+                                                        graph.put_photo( open(id_item + '_' + str(nums) + '.png'), br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)', "")
+                                        else:
+                                                graph.put_photo( open(id_item + '.png'), title+'\r\n\r\n제작자 : 김태훈(carpedm20)', "")
+                                send_mail(title, id_item+'.png')
 
-								data += dd
-								print ".",
-							except:	
-								s.send('\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30')
-								print "[#] Again"
-						s.close()
-
-						f_name = sh[sh.find('temp/')+5:]
-
-						f = open(f_name,'wb')
-						f.write(data)
-						f.close()
-
-						print "[*] " + sh + " END"
-
-						subprocess.call('cp '+f_name+' ~/public_html/',shell=True)
-						br_spy.load('http://hexa.perl.sh/~carpedm30/excel.php?name='+f_name)
-						f_name = 'food_'+base64.b64encode(title)+'.png'
-						br_spy.snapshot().save(f_name)
-						img=Image.open(f_name)
-						width, height = img.size
-						print 'width : ' + str(width)
-
-						slice_num=3
-						sliced=True
-
-						print 'sliced num : ' + str(slice_num)
-
-						if sliced is True:
-							width_slice(f_name,f_name,os.getcwd(),slice_num)
-
-						graph = facebook.GraphAPI(app_access)
-
-						if sliced is True:
-							for nums in range(1, slice_num+1):
-								nums=slice_num-nums+1
-								print '[7] upload : ' + f_name + '_' + str(nums)
-
-								graph.put_photo( open(f_name + '_' + str(nums) + '.png'), '부활 성공? :)\r\n\r\n' + title + ' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\nDesigned by carpedm20', "")
-
-						#graph.put_photo( open(f_name + '.png'), title+'\r\n\r\nDesigned by carpedm20', "")
-						print "put_photo finished"
-						
-					link = token_request_url
-
-					#print '[1] open link'
-					br_mech.open(link)
-
-					#print '[2] current url : ' + br_mech.geturl()
-
-					br_mech.form = list(br_mech.forms())[0]
-					control = br_mech.form.find_control("email")
-					control.value = facebook_id
-					control = br_mech.form.find_control("pass")
-					control.value = facebook_pass
-
-					#print '[3] submit'
-					br_mech.submit()
-
-					#print '[4] current url : ' + br_mech.geturl()
-
-					app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
-					print '[5] access token : ' + app_access
-				else:
-					if sliced is True:
-						for nums in range(1, slice_num+1):
-							nums=slice_num-nums+1
-							print '[7] upload : ' + id_item + '_' + str(nums)
-							graph.put_photo( open(id_item + '_' + str(nums) + '.png'), br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\nDesigned by carpedm20', "")
-					else:
-						graph.put_photo( open(id_item + '.png'), title+'\r\n\r\nDesigned by carpedm20', "")
-				send_mail(title, id_item+'.png')
-
-	time.sleep(10)
+        time.sleep(10)
+#http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid=B200902281833482321051&nfirst=2
+#http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid=B200902281833482321051&bullid=BB201305031503464912493
