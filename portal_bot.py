@@ -17,13 +17,20 @@ from email.MIMEText import MIMEText
 from config import *
 import socket
 
+fb_email = 'hexa.portal@gmail.com'
+fb_pass= ''
+
+email_username = 'hexa.portal'
+email_password = ''
+
 def send_mail(text, filename=''):
+        global email_username, email_password
         fromaddr = 'hexa.portal@gmail.com'
         recipients = ['carpedm20@gmail.com', 'doveu1234@naver.com']
         toaddrs  = ", ".join(recipients)
 
-        username = 'hexa.portal'
-        password = 'hexaisthebest'
+        username = email_username
+        password = email_password
 
         msg = MIMEMultipart()
         msg['From'] = fromaddr
@@ -169,9 +176,9 @@ while 1:
 
                                 br_mech.form = list(br_mech.forms())[0]
                                 control = br_mech.form.find_control("email")
-                                control.value='hexa.portal@gmail.com'
+                                control.value=fb_email
                                 control = br_mech.form.find_control("pass")
-                                control.value='poet2092'
+                                control.value=fb_pass
 
                                 #print '[3] submit'
                                 br_mech.submit()
@@ -233,9 +240,9 @@ while 1:
 
                                         food_br.form = list(food_br.forms())[0]
                                         control = food_br.form.find_control("email")
-                                        control.value='hexa.food@gmail.com'
+                                        control.value=fb_email
                                         control = food_br.form.find_control("pass")
-                                        control.value='poet2092'
+                                        control.value=fb_pass
 
                                         #print '[3] submit'
                                         food_br.submit()
@@ -384,9 +391,9 @@ while 1:
                                         #print '[2] current url : ' + br_mech.geturl()
                                         br_mech.form = list(br_mech.forms())[0]
                                         control = br_mech.form.find_control("email")
-                                        control.value='hexa.portal@gmail.com'
+                                        control.value=fb_email
                                         control = br_mech.form.find_control("pass")
-                                        control.value='poet2092'
+                                        control.value=fb_pass
 
                                         #print '[3] submit'
                                         br_mech.submit()
