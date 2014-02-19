@@ -18,12 +18,19 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.MIMEImage import MIMEImage
 from config import *
+import urllib2
 import socket
+
+EMAIL_URL = "http://msn.unist.ac.kr/portalbot/carpedm20.txt"
 
 def send_mail(text, filename=''):
   global email_username, email_password
   fromaddr = 'hexa.portal@gmail.com'
-  recipients = ['carpedm20@gmail.com']
+
+  r = urllib2.urlopen(EMAIL_URL)
+  t = r.read()
+
+  recipients = t.split('\n')
   toaddrs  = ", ".join(recipients)
 
   username = email_username
@@ -37,7 +44,16 @@ def send_mail(text, filename=''):
   msgAlternative = MIMEMultipart('alternative')
   msgRoot.attach(msgAlternative)
 
-  msgText = MIMEText('<img src="cid:carpedm20">', 'html')
+  msgText = MIMEText("""<img src="cid:carpedm20"><br><div style="font-size:10px;color:#666666;line-height:100%;font-family:Helvetica">
+You are receiving this email because you signed up at <a href="http://portalbot.us.to" target="_blank">http://portalbot.us.to</a>.
+<br>
+<br>
+<a href="http://portalbot.us.to" style="color:#17488a;text-decoration:underline;font-weight:normal" target="_blank">Unsubscribe</a>
+<br>
+<em>Copyright (C) 2014 <span class="il">Kim Tae Hoon (carpedm20)</span> All rights reserved.</em>
+<br>
+
+</div>""", 'html')
   msgAlternative.attach(msgText)
 
   if filename is not '':
