@@ -14,44 +14,43 @@ from xvfbwrapper import Xvfb
 from email.MIMEImage import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
+from email.MIMEImage import MIMEImage
 from config import *
 import socket
 
-fb_email = 'hexa.portal@gmail.com'
-fb_pass= ''
-
-email_username = 'hexa.portal'
-email_password = ''
-
 def send_mail(text, filename=''):
-        global email_username, email_password
-        fromaddr = 'hexa.portal@gmail.com'
-        recipients = ['carpedm20@gmail.com', 'doveu1234@naver.com']
-        toaddrs  = ", ".join(recipients)
+  global email_username, email_password
+  fromaddr = 'hexa.portal@gmail.com'
+  recipients = ['carpedm20@gmail.com']
+  toaddrs  = ", ".join(recipients)
 
-        username = email_username
-        password = email_password
+  username = email_username
+  password = email_password
 
-        msg = MIMEMultipart()
-        msg['From'] = fromaddr
-        msg['To'] = toaddrs
-        msg['Subject'] = text
+  msgRoot = MIMEMultipart('related')
+  msgRoot['Subject'] = text
+  msgRoot['From'] = fromaddr
+  msgRoot['To'] = toaddrs
 
-        part = MIMEText('text', "plain")
-        part.set_payload(text)
-        msg.attach(part)
+  msgAlternative = MIMEMultipart('alternative')
+  msgRoot.attach(msgAlternative)
 
-        if filename is not '':
-                img = MIMEImage(open(filename,"rb").read(), _subtype="png")
-                img.add_header('Content-Disposition', 'attachment; filename="'+filename+'"')
-                msg.attach(img)
+  msgText = MIMEText('<img src="cid:carpedm20">', 'html')
+  msgAlternative.attach(msgText)
 
-        server = smtplib.SMTP('smtp.gmail.com:587')
-        server.starttls()
-        server.login(username,password)
-        server.sendmail(fromaddr, recipients, msg.as_string())
-        server.quit()
-        print " - mail sended"
+  if filename is not '':
+    img = MIMEImage(open(filename,"rb").read(), _subtype="png")
+    img.add_header('Content-ID', '<carpedm20>')
+    msgRoot.attach(img)
+    
+  server = smtplib.SMTP('smtp.gmail.com:587')
+  server.starttls()
+  server.login(username,password)
+  server.sendmail(fromaddr, recipients, msgRoot.as_string())
+  server.quit()
+  print " - mail sended"
 
 def exit_handler():
         print "DEAD"
@@ -153,6 +152,7 @@ while 1:
                           id_list.append(a)
 
                 id_list.remove(id_list[0])
+                print "[*] Length : " + str(len(id_list))
 
                 for id_item in id_list:
                         files = [f for f in os.listdir('.') if os.path.isfile(f)]
@@ -413,6 +413,4 @@ while 1:
                                                 graph.put_photo( open(id_item + '.png'), title+'\r\n\r\n제작자 : 김태훈(carpedm20)', "")
                                 send_mail(title, id_item+'.png')
 
-        time.sleep(10)
-#http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid=B200902281833482321051&nfirst=2
-#http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid=B200902281833482321051&bullid=BB201305031503464912493
+        time.sleep(300)
