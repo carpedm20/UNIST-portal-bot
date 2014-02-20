@@ -426,7 +426,7 @@ while 1:
                                                         print '    TITLE : ' + br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
                                                         graph.put_photo( open(id_item + '_' + str(nums) + '.png'), br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)', "")
                                         else:
-                                                graph.put_photo( open(id_item + '.png'), title+'\r\n\r\n제작자 : 김태훈(carpedm20)', "")
+                                                graph.put_photo( open(id_item + '.png'), title+'\r\n\r\n제작자 : 김태훈(carpedm20)\r\n\r\n포탈 공지 메일로 받기 : http://portalbot.us.to/', "")
                                 send_mail(title, id_item+'.png')
 
         time.sleep(300)
