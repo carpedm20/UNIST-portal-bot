@@ -16,6 +16,4 @@ Facebook : https://www.facebook.com/hexa.portal
 
 Mailing list : http://portalbot.us.to
 
-Contact : carpedm20@gmail.com
-
 Copyright (c) 2014 Kim Tae Hoon
