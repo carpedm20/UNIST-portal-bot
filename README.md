@@ -13,6 +13,7 @@ Portal bot is a program that uploads the UNIST's portal announcements to faceboo
 
 
 Facebook : https://www.facebook.com/hexa.portal
+
 Mailing list : http://portalbot.us.to
 
 Contact : carpedm20@gmail.com
