@@ -1,9 +1,9 @@
- UNIST portal bot
+ UNIST Portal bot
 =====
 
-## What is Comgong Job ##
+## What is Portal bot ##
 
-This is a python code for UNIST portal bot.
+This is a python code for Portal bot.
 
 Portal bot is a program that uploads the UNIST's portal announcements to facebook automatically.
 
