@@ -16,9 +16,33 @@ import urllib2
 import socket
 
 def exit_handler():
-        print "DEAD"
-        vdisplay.stop()
-        #send_mail("Bot is DEAD")
+    link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.github.io&response_type=token&client_id=256972304447471'
+
+    br_mech = mechanize.Browser()
+    br_mech.set_handle_robots(False)
+
+    #print '[1] open link'
+    br_mech.open(link)
+
+    #print '[2] current url : ' + br_mech.geturl()
+
+    br_mech.form = list(br_mech.forms())[0]
+    control = br_mech.form.find_control("email")
+    control.value=fb_email
+    control = br_mech.form.find_control("pass")
+    control.value=fb_pass
+
+    #print '[3] submit'
+    br_mech.submit()
+
+    #print '[4] current url : ' + br_mech.geturl()
+
+    app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
+    graph = facebook.GraphAPI(app_access)
+    graph.put_wall_post('죽었다 :(')
+    print "DEAD"
+    vdisplay.stop()
+    #send_mail("Bot is DEAD")
 
 def long_slice(image_path, out_name, outdir, number):
         img = Image.open(image_path)
@@ -85,7 +109,7 @@ cookies = dict(#cookie='off',
                )
 
 while 1:
-	r = session.get(url, cookies=cookies)
+        r = session.get(url, cookies=cookies)
         print '.'
         br_mech = mechanize.Browser()
         br_mech.set_handle_robots(False)
@@ -212,10 +236,8 @@ while 1:
                                                         print '[7] upload : ' + id_item + '_' + str(nums)
                                                         print '    TITLE : ' + br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
                                                         graph.put_photo( open(id_item + '_' + str(nums) + '.png'), message=br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)')
-							#new_photo = graph.post('107469732792015/photos',  params={'message':r_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)', 'source': open(id_item + '_' + str(nums) + '.png')})
                                         else:
                                                 graph.put_photo( open(id_item + '.png'), message=title+'\r\n\r\n제작자 : 김태훈(carpedm20)')
-						#new_photo = graph.post('107469732792015/photos' , params={'message':title+'\r\n\r\n제작자 : 김태훈(carpedm20)', 'source': open(id_item + '.png')})
 
                                 #send_mail(title, id_item+'.png')
 
