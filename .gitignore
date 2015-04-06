@@ -1,2 +1,6 @@
 *.swp
+config.py
+facebook
+test.py
 *.pyc
+*.png

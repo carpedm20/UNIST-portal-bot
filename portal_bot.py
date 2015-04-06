@@ -11,62 +11,9 @@ import smtplib
 import atexit
 import subprocess
 from xvfbwrapper import Xvfb
-from email.MIMEImage import MIMEImage
-from email.mime.multipart import MIMEMultipart
-from email.MIMEText import MIMEText
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
-from email.MIMEImage import MIMEImage
 from config import *
 import urllib2
 import socket
-
-EMAIL_URL = "http://msn.unist.ac.kr/portalbot/carpedm20.txt"
-
-def send_mail(text, filename=''):
-  global email_username, email_password
-  fromaddr = 'hexa.portal@gmail.com'
-
-  r = urllib2.urlopen(EMAIL_URL)
-  t = r.read()
-
-  recipients = t.split('\n')
-  toaddrs  = ", ".join(recipients)
-
-  username = email_username
-  password = email_password
-
-  msgRoot = MIMEMultipart('related')
-  msgRoot['Subject'] = text
-  msgRoot['From'] = fromaddr
-  msgRoot['To'] = toaddrs
-
-  msgAlternative = MIMEMultipart('alternative')
-  msgRoot.attach(msgAlternative)
-
-  msgText = MIMEText("""<img src="cid:carpedm20"><br><div style="font-size:10px;color:#666666;line-height:100%;font-family:Helvetica">
-You are receiving this email because you signed up at <a href="http://portalbot.us.to" target="_blank">http://portalbot.us.to</a>.
-<br>
-<br>
-<a href="http://portalbot.us.to" style="color:#17488a;text-decoration:underline;font-weight:normal" target="_blank">Unsubscribe</a>
-<br>
-<em>Copyright (C) 2014 <span class="il">Kim Tae Hoon (carpedm20)</span> All rights reserved.</em>
-<br>
-
-</div>""", 'html')
-  msgAlternative.attach(msgText)
-
-  if filename is not '':
-    img = MIMEImage(open(filename,"rb").read(), _subtype="png")
-    img.add_header('Content-ID', '<carpedm20>')
-    msgRoot.attach(img)
-    
-  server = smtplib.SMTP('smtp.gmail.com:587')
-  server.starttls()
-  server.login(username,password)
-  server.sendmail(fromaddr, recipients, msgRoot.as_string())
-  server.quit()
-  print " - mail sended"
 
 def exit_handler():
         print "DEAD"
@@ -126,15 +73,26 @@ from cookielib import Cookie
 c=Cookie(version=0, name='JSESSIONID', value=jsession, port=None, port_specified=False, domain='portal.unist.ac.kr', domain_specified=False, domain_initial_dot=False, path='/EP', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
 cj.set_cookie(c)
 
+import requests
+
+session = requests.Session()
+
+url = "http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid=B200902281833016691048&p=1"
+cookies = dict(#cookie='off',
+               JSESSIONID=jsession,
+               #MYSAPSSO2='AjExMDAgAA9wb3J0YWw6MjAxMTExNjeIABNiYXNpY2F1dGhlbnRpY2F0aW9uAQAIMjAxMTExNjcCAAMwMDADAANVRVAEAAwyMDE1MDQwNjA3NDgFAAQAAAAICgAIMjAxMTExNjf%2FAQUwggEBBgkqhkiG9w0BBwKggfMwgfACAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHATGB0DCBzQIBATAiMB0xDDAKBgNVBAMTA1VFUDENMAsGA1UECxMESjJFRQIBADAJBgUrDgMCGgUAoF0wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMTUwNDA2MDc0ODU0WjAjBgkqhkiG9w0BCQQxFgQU%2FC06MkY9DIhASkG6Dp2nyjAbY8MwCQYHKoZIzjgEAwQvMC0CFAhu89lHgeNY0WKyiMr41vrcE1E!AhUAmkL5gM5ZvU!%2Fo6UyZPQ1LxrwiUo%3D',
+               #SAPWP_active='1')
+               )
 
 while 1:
+	r = session.get(url, cookies=cookies)
         print '.'
         br_mech = mechanize.Browser()
         br_mech.set_handle_robots(False)
         #br_spy = spynner.Browser()
         #br_spy.load('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid=B200902281833482321051&nfirst='+str(i))
 
-        br_mech.open(login_url)
+        br_mech.open('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid=B200902281833016691048&p=1')
         br_mech.set_cookie('JSESSIONID=' + jsession)
         br_mech.set_cookiejar(cj)
 
@@ -144,11 +102,14 @@ while 1:
         for boardid in ['B201309091034272615665', # new announcement
                   'B200912141432112623720', # internship
                   'B201309090952407345581', # student support announcement
+                  'B201003111719010571299',
                   ###########################
                   'B200902281833482321051', # old announcement
-                  'B200902281833016691048']:
-                r = br_mech.open('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1')
-                html=r.read()
+                  'B200902281833016691048']: # total announcement
+                #r = br_mech.open('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1')
+                #html=r.read()
+                r = session.get('http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1', cookies=cookies)
+                html = r.text
                 print ' [*] START : http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardLst.jsp?boardid='+boardid+'&nfirst=1'
 
                 id_list=[]
@@ -180,7 +141,7 @@ while 1:
                                         new = True
 
                         if new is False:
-                                link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=256972304447471'
+                                link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.github.io&response_type=token&client_id=256972304447471'
 
                                 br_mech = mechanize.Browser()
                                 br_mech.set_handle_robots(False)
@@ -244,189 +205,18 @@ while 1:
                                 title = br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
 
                                 print '[7] upload : ' + id_item
-                                if title.find('주간메뉴표') is not -1:
-                                        link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=530042293708395'
-
-                                        #print '[1] open link'
-                                        food_br = mechanize.Browser()
-                                        food_br.set_handle_robots(False)
-                                        food_br.open(link)
-
-                                        #print '[2] current url : ' + br_mech.geturl()
-
-                                        food_br.form = list(food_br.forms())[0]
-                                        control = food_br.form.find_control("email")
-                                        control.value=fb_email
-                                        control = food_br.form.find_control("pass")
-                                        control.value=fb_pass
-
-                                        #print '[3] submit'
-                                        food_br.submit()
-
-                                        #print '[4] current url : ' + br_mech.geturl()
-
-                                        app_access = food_br.geturl().split('token=')[1].split('&expires')[0]
-                                        print '[5] access token : ' + app_access
-
-                                        br_mech.open(login_url)
-                                        r = br_mech.open("http://portal.unist.ac.kr/EP/web/collaboration/bbs/jsp/BB_BoardView.jsp?boardid="+boardid+"&bullid="+id_item)
-                                        r = r.read()
-                                        r = r[r.find('fid=')+4:]
-                                        fid = r[:r.find('&jndiname=')]
-
-                                        r = br_mech.open("http://portal.unist.ac.kr/EP/web/common/attach/att_list.jsp?fid="+fid+"&jndiname=BB_Attach")
-
-                                        br_mech.select_form(name="frmList")
-
-                                        try:
-                                           file0 = br_mech.form['sInfo0']
-                                        except:
-                                           file0 = ''
-
-                                        try:
-                                           file1 = br_mech.form['sInfo1']
-                                        except:
-                                           file1 = ''
-
-                                        br_mech.select_form(name="frmSubmit")
-                                        br_mech.form.find_control("fileinfos").readonly = False
-
-                                        if file1 is '':
-                                                br_mech.form['fileinfos'] = file0 + "\x1F"
-                                        else:
-                                                br_mech.form['fileinfos'] = file0 + "\x1F" + file1 + "\x1F"
-
-                                        br_mech.form.find_control("viewdown").readonly = False
-                                        br_mech.form['viewdown']='view'
-
-                                        r = br_mech.submit()
-                                        data= str(r.read())
-                                        #print data
-
-                                        data = data[data.find("/wwasdata/acube/ep/acube_sftptemp/")+1:]
-
-                                        start0 = data.find("/wwasdata/acube/ep/acube_sftptemp/")
-                                        end0 = data.find("\x1d",start0)
-                                        start1 = data.find("/wwasdata/acube/ep/acube_sftptemp/",end0)
-                                        end1= data.find("\x1d",start1)
-
-                                        sh0 = data[start0:end0]
-                                        sh1 = data[start1:end1]
-
-                                        print "[*] 0 : " + sh0
-                                        print "[*] 1 : " + sh1
-
-                                        f_count = 0
-                                        h = br_spy.html
-                                        for sh in [sh0, sh1]:
-                                                if h.find('sAttachReal" value=') is not -1:
-                                                        h = h[h.find('sAttachReal" value=')+len('sAttachReal" value=')+1:]
-                                                title = h[:h.find('.xls')].encode('utf-8')
-                                                h = h[h.find('.xls')+5:]
-
-                                                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                                                s.connect(('sftp.unist.ac.kr', 7775))
-                                                s.settimeout(0.5)
-
-                                                send_data = "DOWNLOAD\x091\x091\x09"+sh
-
-                                                send_len = str(len(send_data))
-                                                i = len(send_len)
-
-                                                while i< 10:
-                                                        send_len = "0"+send_len
-                                                        i=i+1
-
-                                                print "[#] Send : " + send_len
-                                                s.send(send_len)
-                                                s.send(send_data)
-
-                                                get = s.recv(1024)
-                                                print "[1] " + get
-                                                get = s.recv(1024)
-                                                print "[2] " + get
-
-                                                data = get[13:]
-                                                while True:
-                                                        try:
-                                                                dd = s.recv(1024)
-
-                                                                if len(dd) is 0:
-                                                                        print "[$] File END"
-                                                                        break
-
-                                                                data += dd
-                                                                print ".",
-                                                        except:
-                                                                s.send('\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30')
-                                                                print "[#] Again"
-                                                s.close()
-
-                                                f_name = sh[sh.find('temp/')+5:]
-
-                                                f = open(f_name,'wb')
-                                                f.write(data)
-                                                f.close()
-
-                                                print "[*] " + sh + " END"
-
-                                                subprocess.call('cp '+f_name+' ~/public_html/',shell=True)
-                                                br_spy.load('http://hexa.perl.sh/~carpedm30/excel.php?name='+f_name)
-                                                f_name = 'food_'+base64.b64encode(title)+'.png'
-                                                br_spy.snapshot().save(f_name)
-                                                img=Image.open(f_name)
-                                                width, height = img.size
-                                                print 'width : ' + str(width)
-
-                                                slice_num=3
-                                                sliced=True
-
-                                                print 'sliced num : ' + str(slice_num)
-
-                                                if sliced is True:
-                                                        width_slice(f_name,f_name,os.getcwd(),slice_num)
-
-                                                graph = facebook.GraphAPI(app_access)
-
-                                                if sliced is True:
-                                                        for nums in range(1, slice_num+1):
-                                                                nums=slice_num-nums+1
-                                                                print '[7] upload : ' + f_name + '_' + str(nums)
-
-                                                                #graph.put_photo( open(f_name + '_' + str(nums) + '.png'), '부활 성공? :)\r\n\r\n' + title + ' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\nDesigned by carpedm20', "")
-
-                                                #graph.put_photo( open(f_name + '.png'), title+'\r\n\r\nDesigned by carpedm20', "")
-                                                print "put_photo finished"
-                                        link='https://www.facebook.com/dialog/oauth?scope=publish_stream,publish_actions,&redirect_uri=http://carpedm20.blogspot.kr&response_type=token&client_id=256972304447471'
-
-                                        br_mech = mechanize.Browser()
-                                        br_mech.set_handle_robots(False)
-                                        #print '[1] open link'
-                                        br_mech.open(link)
-
-                                        #print '[2] current url : ' + br_mech.geturl()
-                                        br_mech.form = list(br_mech.forms())[0]
-                                        control = br_mech.form.find_control("email")
-                                        control.value=fb_email
-                                        control = br_mech.form.find_control("pass")
-                                        control.value=fb_pass
-
-                                        #print '[3] submit'
-                                        br_mech.submit()
-
-                                        #print '[4] current url : ' + br_mech.geturl()
-
-                                        app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
-                                        print '[5] access token : ' + app_access
-                                else:
+                                if True:
                                         if sliced is True:
                                                 for nums in range(1, slice_num+1):
                                                         nums=slice_num-nums+1
                                                         print '[7] upload : ' + id_item + '_' + str(nums)
                                                         print '    TITLE : ' + br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')
-                                                        graph.put_photo( open(id_item + '_' + str(nums) + '.png'), br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)', "")
+                                                        graph.put_photo( open(id_item + '_' + str(nums) + '.png'), message=br_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)')
+							#new_photo = graph.post('107469732792015/photos',  params={'message':r_spy.html.split('class="tb_left">')[1].split('>')[1].split('</')[0].strip().encode('utf-8')+' ['+str(nums)+'/'+str(slice_num)+']'+'\r\n\r\n제작자 : 김태훈(carpedm20)', 'source': open(id_item + '_' + str(nums) + '.png')})
                                         else:
-                                                graph.put_photo( open(id_item + '.png'), title+'\r\n\r\n제작자 : 김태훈(carpedm20)\r\n\r\n포탈 공지 메일로 받기 : http://portalbot.us.to/', "")
-                                send_mail(title, id_item+'.png')
+                                                graph.put_photo( open(id_item + '.png'), message=title+'\r\n\r\n제작자 : 김태훈(carpedm20)')
+						#new_photo = graph.post('107469732792015/photos' , params={'message':title+'\r\n\r\n제작자 : 김태훈(carpedm20)', 'source': open(id_item + '.png')})
+
+                                #send_mail(title, id_item+'.png')
 
         time.sleep(300)
