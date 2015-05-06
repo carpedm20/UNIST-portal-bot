@@ -39,7 +39,7 @@ def exit_handler():
 
     app_access = br_mech.geturl().split('token=')[1].split('&expires')[0]
     graph = facebook.GraphAPI(app_access)
-    graph.put_wall_post('죽었다 :(')
+    graph.put_wall_post('죽었다.. 개발자는 이것을 보고 다시 포탈봇을 켜야합니다 :( ')
     print "DEAD"
     vdisplay.stop()
     #send_mail("Bot is DEAD")
