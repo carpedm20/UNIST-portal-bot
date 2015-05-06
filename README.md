@@ -1,23 +1,16 @@
  UNIST Portal bot
 =====
 
-## What is Portal bot ##
-
 This is a python code for Portal bot.
 
 Portal bot is a program that uploads the UNIST's portal announcements to facebook automatically.
 
-
-## Links ##
-
-Facebook : https://www.facebook.com/hexa.portal
-
-Mailing list : http://portalbot.us.to
+[Bot](https://www.facebook.com/hexa.portal)
 
 
 ## Copyright ##
 
-Copyright (c) 2014 Kim Tae Hoon
+Copyright (c) 2015 Kim Tae Hoon
 
 
 ## Screenshot ##
